@@ -81,8 +81,7 @@ fn _infura_api() -> &'static Uri<'static> {
 
 fn __contract_address() -> &'static String {
     static INSTANCE: OnceCell<String> = OnceCell::new();
-    INSTANCE
-        .get_or_init(|| env::var("CONTRACT_ADDRESS").expect("no env variable: CONTRACT_ADDRESS"))
+    INSTANCE.get_or_init(|| env::var("CONTRACT_ADDRESS").unwrap_or_default())
 }
 
 fn _contract_address() -> &'static Address {
