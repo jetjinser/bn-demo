@@ -13,7 +13,6 @@ slack-flows = "0.2.3"
 
 ethers-core = "1.0.2"
 ethers-signers = "1.0.2"
-
 once_cell = "1.16.0"
 http_req_wasi = "0.10.1"
 serde = { version = "1.0.151", features = ["derive"] }

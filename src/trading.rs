@@ -2,7 +2,10 @@ mod balance_of;
 mod copy;
 mod transfer;
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    env,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 use balance_of::BalanceOf;
 use blocknative_flows::{listen_to_address, Event};
@@ -23,9 +26,6 @@ use once_cell::sync::OnceCell;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-// XXX: infura api, include api key
-const INFURA_API: &str = env!("INFURA_API");
-
 // XXX: minimum eth
 const MIN_ETH: f32 = 30.0;
 
@@ -37,12 +37,6 @@ const CHAIN_ID: u8 = 5;
 
 // XXX: `from` address
 const FROM: &str = "0x1291351b8Aa33FdC64Ac77C8302Db523d5B43AeF";
-
-// XXX: `from`'s private key
-const PRIVATE_KEY: &str = env!("PRIVATE_KEY");
-
-// XXX: contract address
-const CONTRACT_ADDRESS: &str = env!("CONTRACT_ADDRESS");
 
 #[no_mangle]
 pub fn run() {
@@ -60,19 +54,43 @@ fn get_id() -> usize {
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
+fn __local_wallet() -> &'static String {
+    static INSTANCE: OnceCell<String> = OnceCell::new();
+    INSTANCE.get_or_init(|| env::var("PRIVATE_KEY").expect("no env variable: PRIVATE_KEY"))
+}
 fn _local_wallet() -> &'static LocalWallet {
     static INSTANCE: OnceCell<LocalWallet> = OnceCell::new();
-    INSTANCE.get_or_init(|| PRIVATE_KEY.parse().unwrap())
+    INSTANCE.get_or_init(|| {
+        let private_key = __local_wallet();
+        private_key.parse().unwrap()
+    })
+}
+
+fn __infura_api() -> &'static String {
+    static INSTANCE: OnceCell<String> = OnceCell::new();
+    INSTANCE.get_or_init(|| env::var("INFURA_API").expect("no env variable: INFURA_API"))
 }
 
 fn _infura_api() -> &'static Uri<'static> {
     static INSTANCE: OnceCell<Uri> = OnceCell::new();
-    INSTANCE.get_or_init(|| Uri::try_from(INFURA_API).expect("uri error"))
+    INSTANCE.get_or_init(|| {
+        let infura_api = __infura_api();
+        Uri::try_from(infura_api.as_str()).expect("uri error")
+    })
+}
+
+fn __contract_address() -> &'static String {
+    static INSTANCE: OnceCell<String> = OnceCell::new();
+    INSTANCE
+        .get_or_init(|| env::var("CONTRACT_ADDRESS").expect("no env variable: CONTRACT_ADDRESS"))
 }
 
 fn _contract_address() -> &'static Address {
     static INSTANCE: OnceCell<Address> = OnceCell::new();
-    INSTANCE.get_or_init(|| CONTRACT_ADDRESS.parse().unwrap())
+    INSTANCE.get_or_init(|| {
+        let contract_address = __contract_address();
+        contract_address.parse().unwrap()
+    })
 }
 
 const MIN_WEI: u128 = (MIN_ETH * 1e18) as u128;
@@ -95,7 +113,8 @@ struct EthBalance {
 fn _run(event: Event) -> Result<String, String> {
     let address = event.watched_address;
 
-    if CONTRACT_ADDRESS.is_empty() {
+    let contract_address = __contract_address();
+    if contract_address.is_empty() {
         _run_eth(address)
     } else {
         _run_erc20(address)
@@ -332,9 +351,11 @@ fn _get_balance_erc20(address: &str, id: usize) -> Result<u128, String> {
 
     let data: types::Bytes = call.encode().into();
 
+    let contract_address = __contract_address();
+
     let tx = serde_json::json!({
         "from": FROM,
-        "to": CONTRACT_ADDRESS,
+        "to": contract_address,
         "data": data,
     });
 
