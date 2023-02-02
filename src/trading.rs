@@ -130,7 +130,9 @@ fn _run_eth(address: String) -> Result<String, String> {
     let balance = _get_balance(&address, get_id())?;
 
     if balance < MIN_WEI {
-        _send_tx(address).map(|s| format!("tx sended: {}", s))
+        _send_tx(address)
+            .map(|s| format!("tx sended: {}", s))
+            .map_err(|e| format!("_run_eth:\n{}", e))
     } else {
         Ok(String::from("ignored"))
     }
@@ -140,7 +142,9 @@ fn _run_erc20(address: String) -> Result<String, String> {
     let balance = _get_balance_erc20(&address, get_id())?;
 
     if balance < MIN_WEI {
-        _send_tx_erc20(address).map(|s| format!("tx sended: {}", s))
+        _send_tx_erc20(address)
+            .map(|s| format!("tx sended: {}", s))
+            .map_err(|e| format!("_run_erc20:\n{}", e))
     } else {
         Ok(String::from("ignored"))
     }
@@ -324,7 +328,7 @@ fn _send_tx_erc20(to: String) -> Result<String, String> {
     let gas_price = u128::from_str_radix(hex_gas_price.trim_start_matches("0x"), 16)
         .map_err(|e| format!("parse error: {}, raw: {}", e, hex_gas_price))?;
 
-    let ext = data.len() as u64 * 68 * 8;
+    let ext = data.len() as u64 * 68 * 10;
     let gas = _estimate_gas(get_id(), tx_p)? + ext;
 
     let nonce = _get_tx_count(FROM, get_id())?;
