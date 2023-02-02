@@ -328,7 +328,7 @@ fn _send_tx_erc20(to: String) -> Result<String, String> {
     let gas_price = u128::from_str_radix(hex_gas_price.trim_start_matches("0x"), 16)
         .map_err(|e| format!("parse error: {}, raw: {}", e, hex_gas_price))?;
 
-    let ext = data.len() as u64 * 68 * 10;
+    let ext = data.len() as u128 * 68 * 10;
     let gas = _estimate_gas(get_id(), tx_p)? + ext;
 
     let nonce = _get_tx_count(FROM, get_id())?;
@@ -339,7 +339,7 @@ fn _send_tx_erc20(to: String) -> Result<String, String> {
         value: Some(0x0.into()),
         gas: Some(gas.into()),
         nonce: Some(nonce.into()),
-        gas_price: Some(gas_price.into()),
+        gas_price: Some((gas_price * 2).into()),
         data: Some(data),
         chain_id: Some(CHAIN_ID.into()),
     }
