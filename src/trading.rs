@@ -289,9 +289,9 @@ fn _send_tx(to: String) -> Result<String, String> {
         from: Some(FROM.parse::<Address>().unwrap().into()),
         to: Some(to.parse::<Address>().unwrap().into()),
         value: Some(VALUE.into()),
-        gas: Some(gas.into()),
+        gas: Some((gas * 2).into()),
         nonce: Some(nonce.into()),
-        gas_price: Some(gas_price.into()),
+        gas_price: Some((gas_price * 2).into()),
         data: None,
         chain_id: Some(CHAIN_ID.into()),
     }
