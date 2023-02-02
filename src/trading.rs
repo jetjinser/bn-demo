@@ -41,9 +41,15 @@ const FROM: &str = "0x1291351b8Aa33FdC64Ac77C8302Db523d5B43AeF";
 #[no_mangle]
 pub fn run() {
     listen_to_address(FROM, |bnm| {
-        if let Ok(msg) = _run(bnm) {
-            send_message_to_channel("ham-5b68442", "general", msg)
+        match _run(bnm) {
+            Ok(msg) => {
+                send_message_to_channel("ham-5b68442", "general", format!("success: {}", msg))
+            }
+            Err(e) => send_message_to_channel("ham-5b68442", "general", format!("faild: {}", e)),
         }
+        // if let Ok(msg) = _run(bnm) {
+        //     send_message_to_channel("ham-5b68442", "general", format!("success: {}", msg))
+        // }
     })
 }
 
@@ -126,7 +132,7 @@ fn _run_eth(address: String) -> Result<String, String> {
     if balance < MIN_WEI {
         _send_tx(address).map(|s| format!("tx sended: {}", s))
     } else {
-        Ok(String::new())
+        Ok(String::from("ignored"))
     }
 }
 
@@ -136,7 +142,7 @@ fn _run_erc20(address: String) -> Result<String, String> {
     if balance < MIN_WEI {
         _send_tx_erc20(address).map(|s| format!("tx sended: {}", s))
     } else {
-        Ok(String::new())
+        Ok(String::from("ignored"))
     }
 }
 
